@@ -1,0 +1,23 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  Nachoaguirre\WassengerBundle\EventSubscriber\GreetingsSubscriber:
+    arguments:
+      $enabled: true
+
+  Nachoaguirre\WassengerBundle\Service\PhoneNumberNormalizer: ~
+
+  Nachoaguirre\WassengerBundle\Registry\RecipientRegistry: ~
+
+  Nachoaguirre\WassengerBundle\Provider\WassengerProvider:
+    arguments:
+      $httpClient: "@http_client"
+
+  Nachoaguirre\WassengerBundle\Command\WassengerSetupCommand: ~
+
+  Nachoaguirre\WassengerBundle\Controller\WebhookController:
+    arguments:
+      $eventDispatcher: "@event_dispatcher"
+    tags: ["controller.service_arguments"]

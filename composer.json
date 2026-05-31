@@ -1,0 +1,21 @@
+{
+    "name": "nachoaguirre/wassenger-bundle",
+    "description": "Symfony bundle to integrate wassenger.com service",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Nachoaguirre\\WassengerBundle\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=8.1",
+        "symfony/http-client": "^6.0|^7.0",
+        "symfony/config": "^6.0|^7.0",
+        "symfony/dependency-injection": "^6.0|^7.0",
+        "symfony/http-kernel": "^6.0|^7.0"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95"
+    }
+}

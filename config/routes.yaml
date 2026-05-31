@@ -1,0 +1,4 @@
+nachoaguirre_wassenger_webhook:
+  path: /webhook/wassenger
+  controller: Nachoaguirre\WassengerBundle\Controller\WebhookController
+  methods: [POST]
