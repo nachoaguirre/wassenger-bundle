@@ -10,8 +10,12 @@ class PhoneNumberNormalizer
     {
         $clean = preg_replace('/[^\d+]/', '', $phone);
 
-        if (!str_starts_with($clean, '+') && strlen($clean) > 8) {
-            $clean = '+' . $clean;
+        if ($clean === '' || $clean === '+') {
+            return '';
+        }
+
+        if (!str_starts_with($clean, '+') && \strlen($clean) > 8) {
+            $clean = "+$clean";
         }
 
         return $clean;

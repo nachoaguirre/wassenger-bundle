@@ -7,6 +7,7 @@ namespace Nachoaguirre\WassengerBundle\EventSubscriber;
 use Nachoaguirre\WassengerBundle\Contract\ProviderInterface;
 use Nachoaguirre\WassengerBundle\Event\WebhookEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Throwable;
 
 class GreetingsSubscriber implements EventSubscriberInterface
 {
@@ -49,7 +50,11 @@ class GreetingsSubscriber implements EventSubscriberInterface
 
         foreach ($this->greetingsMap as $keyword => $response) {
             if (str_contains($body, $keyword)) {
-                $this->provider->sendMessage($from, $response);
+                try {
+                    $this->provider->sendMessage($from, $response);
+                } catch (Throwable) {
+                    // Do not re-throw: the webhook handler must always return 2xx to avoid retries
+                }
                 break;
             }
         }

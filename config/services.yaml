@@ -7,13 +7,11 @@ services:
     alias: Nachoaguirre\WassengerBundle\Provider\WassengerProvider
     public: true
 
-  Nachoaguirre\WassengerBundle\EventSubscriber\GreetingsSubscriber:
-    arguments:
-      $enabled: true
+  Nachoaguirre\WassengerBundle\EventSubscriber\GreetingsSubscriber: ~
 
   Nachoaguirre\WassengerBundle\Service\PhoneNumberNormalizer: ~
 
-  Nachoaguirre\WassengerBundle\Registry\RecipientRegistry: ~
+  Nachoaguirre\WassengerBundle\Registry\RecipientRegistry:
     public: true
 
   Nachoaguirre\WassengerBundle\Provider\WassengerProvider:
@@ -23,6 +21,7 @@ services:
   Nachoaguirre\WassengerBundle\Command\WassengerSetupCommand: ~
 
   Nachoaguirre\WassengerBundle\Controller\WebhookController:
+    public: true
     arguments:
       $eventDispatcher: "@event_dispatcher"
     tags: ["controller.service_arguments"]

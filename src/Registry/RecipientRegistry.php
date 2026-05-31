@@ -6,10 +6,15 @@ namespace Nachoaguirre\WassengerBundle\Registry;
 
 use InvalidArgumentException;
 use Nachoaguirre\WassengerBundle\Model\Recipient;
+use Nachoaguirre\WassengerBundle\Service\PhoneNumberNormalizer;
 
 class RecipientRegistry
 {
     private array $recipients = [];
+
+    public function __construct(private readonly PhoneNumberNormalizer $normalizer)
+    {
+    }
 
     public function addRecipient(Recipient $recipient): void
     {
@@ -25,21 +30,32 @@ class RecipientRegistry
     {
         $recipient = $this->get($alias);
 
-        return ($recipient && $recipient->enabled) ? $recipient : null;
+        return $recipient?->enabled ? $recipient : null;
     }
 
     public function resolveIdentifier(string $aliasOrPhone): string
     {
         $recipient = $this->get($aliasOrPhone);
 
-        if ($recipient) {
+        if ($recipient !== null) {
             return $recipient->identifier;
         }
 
-        if (!preg_match('/\d/', $aliasOrPhone)) {
-            throw new InvalidArgumentException(sprintf('The recipient alias "%s" was not found in the registry.', $aliasOrPhone));
+        if ($this->normalizer->isValidFormat($aliasOrPhone)) {
+            return $aliasOrPhone;
         }
 
-        return $aliasOrPhone;
+        throw new InvalidArgumentException(\sprintf('The recipient alias "%s" was not found in the registry.', $aliasOrPhone));
+    }
+
+    /** @return array<string, Recipient> */
+    public function all(): array
+    {
+        return $this->recipients;
+    }
+
+    public function count(): int
+    {
+        return \count($this->recipients);
     }
 }

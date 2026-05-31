@@ -20,7 +20,7 @@ class WebhookController
 
     public function __invoke(Request $request): JsonResponse
     {
-        if ($this->webhookSecret) {
+        if ($this->webhookSecret !== null && $this->webhookSecret !== '') {
             $token = (string) $request->headers->get('X-Wassenger-Token', '');
 
             if (!hash_equals($this->webhookSecret, $token)) {

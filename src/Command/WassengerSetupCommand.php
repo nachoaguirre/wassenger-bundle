@@ -16,8 +16,8 @@ class WassengerSetupCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $apiKey = $io->ask('Introduce tu Wassenger API Key');
-        $deviceId = $io->ask('Introduce tu Wassenger Device ID');
+        $apiKey = $io->askHidden('Introduce tu Wassenger API Key');
+        $deviceId = $io->askHidden('Introduce tu Wassenger Device ID');
 
         $io->success('Configuración lista. Añade esto a tu .env:');
         $io->writeln("WASSENGER_API_KEY=$apiKey");

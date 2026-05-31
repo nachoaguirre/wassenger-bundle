@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use Nachoaguirre\WassengerBundle\Model\Recipient;
 use Nachoaguirre\WassengerBundle\Model\RecipientType;
 use Nachoaguirre\WassengerBundle\Registry\RecipientRegistry;
+use Nachoaguirre\WassengerBundle\Service\PhoneNumberNormalizer;
 use PHPUnit\Framework\TestCase;
 
 final class RecipientRegistryTest extends TestCase
@@ -16,7 +17,7 @@ final class RecipientRegistryTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->registry = new RecipientRegistry();
+        $this->registry = new RecipientRegistry(new PhoneNumberNormalizer());
     }
 
     private function makeRecipient(
@@ -92,7 +93,7 @@ final class RecipientRegistryTest extends TestCase
 
     public function testAddRecipientOverwritesPreviousWithSameAlias(): void
     {
-        $first  = $this->makeRecipient('+111', 'sales');
+        $first = $this->makeRecipient('+111', 'sales');
         $second = $this->makeRecipient('+222', 'sales');
 
         $this->registry->addRecipient($first);

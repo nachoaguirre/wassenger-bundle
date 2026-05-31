@@ -51,5 +51,5 @@
 
 # Embedded web-server pid file
 /.web-server-pid
-/.php-cs-fixer.cache
+.php-cs-fixer.cache
 .DS_Store
