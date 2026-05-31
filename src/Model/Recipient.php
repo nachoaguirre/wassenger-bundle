@@ -9,7 +9,7 @@ class Recipient
     public function __construct(
         public readonly string $identifier,
         public readonly string $alias,
-        public readonly string $type = 'individual', // 'individual' or 'group'
+        public readonly RecipientType $type = RecipientType::INDIVIDUAL,
         public readonly bool $enabled = true,
     ) {
     }

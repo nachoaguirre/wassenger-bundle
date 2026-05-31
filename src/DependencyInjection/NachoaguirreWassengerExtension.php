@@ -7,6 +7,7 @@ namespace Nachoaguirre\WassengerBundle\DependencyInjection;
 use Nachoaguirre\WassengerBundle\Controller\WebhookController;
 use Nachoaguirre\WassengerBundle\EventSubscriber\GreetingsSubscriber;
 use Nachoaguirre\WassengerBundle\Model\Recipient;
+use Nachoaguirre\WassengerBundle\Model\RecipientType;
 use Nachoaguirre\WassengerBundle\Provider\WassengerProvider;
 use Nachoaguirre\WassengerBundle\Registry\RecipientRegistry;
 use Symfony\Component\Config\FileLocator;
@@ -41,7 +42,7 @@ class NachoaguirreWassengerExtension extends Extension
                 new Definition(Recipient::class, [
                     $data['identifier'],
                     $alias,
-                    $data['type'],
+                    RecipientType::from($data['type']),
                     $data['enabled'],
                 ]),
             ]);

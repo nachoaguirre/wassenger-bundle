@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Nachoaguirre\WassengerBundle\EventSubscriber;
 
+use Nachoaguirre\WassengerBundle\Contract\ProviderInterface;
 use Nachoaguirre\WassengerBundle\Event\WebhookEvent;
-use Nachoaguirre\WassengerBundle\Provider\WassengerProvider;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class GreetingsSubscriber implements EventSubscriberInterface
@@ -20,7 +20,7 @@ class GreetingsSubscriber implements EventSubscriberInterface
     ];
 
     public function __construct(
-        private readonly WassengerProvider $provider,
+        private readonly ProviderInterface $provider,
         private readonly bool $enabled = true,
     ) {
     }
@@ -39,6 +39,11 @@ class GreetingsSubscriber implements EventSubscriberInterface
         }
 
         $payload = $event->getPayload();
+
+        if (!isset($payload['data']['from'])) {
+            return;
+        }
+
         $body = strtolower(trim($payload['data']['body'] ?? ''));
         $from = $payload['data']['from'];
 

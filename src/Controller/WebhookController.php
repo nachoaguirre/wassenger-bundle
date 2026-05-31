@@ -21,8 +21,9 @@ class WebhookController
     public function __invoke(Request $request): JsonResponse
     {
         if ($this->webhookSecret) {
-            $token = $request->headers->get('X-Wassenger-Token');
-            if ($token !== $this->webhookSecret) {
+            $token = (string) $request->headers->get('X-Wassenger-Token', '');
+
+            if (!hash_equals($this->webhookSecret, $token)) {
                 return new JsonResponse(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
             }
         }

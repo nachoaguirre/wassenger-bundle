@@ -3,19 +3,46 @@
     "description": "Symfony bundle to integrate wassenger.com service",
     "type": "symfony-bundle",
     "license": "MIT",
+    "authors": [
+        {
+            "name": "Ignacio Aguirre",
+            "email": "ignacio@independiente.cl"
+        }
+    ],
+    "keywords": [
+        "symfony",
+        "bundle",
+        "whatsapp",
+        "wassenger",
+        "api",
+        "bot"
+    ],
     "autoload": {
         "psr-4": {
             "Nachoaguirre\\WassengerBundle\\": "src/"
         }
     },
     "require": {
-        "php": ">=8.1",
-        "symfony/http-client": "^6.0|^7.0",
-        "symfony/config": "^6.0|^7.0",
-        "symfony/dependency-injection": "^6.0|^7.0",
-        "symfony/http-kernel": "^6.0|^7.0"
+        "php": ">=8.4",
+        "symfony/http-client": "^6.0|^7.0|^8.0",
+        "symfony/config": "^6.0|^7.0|^8.0",
+        "symfony/dependency-injection": "^6.0|^7.0|^8.0",
+        "symfony/event-dispatcher": "^6.0|^7.0|^8.0",
+        "symfony/http-kernel": "^6.0|^7.0|^8.0",
+        "symfony/console": "^6.0|^7.0|^8.0"
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.95"
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpunit/phpunit": "^10.0"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Nachoaguirre\\WassengerBundle\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "symfony": {
+            "require": "^6.0|^7.0|^8.0"
+        }
     }
 }

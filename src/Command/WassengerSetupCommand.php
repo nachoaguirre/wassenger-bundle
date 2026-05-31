@@ -1,6 +1,7 @@
 <?php
 
-// src/Command/WassengerSetupCommand.php
+declare(strict_types=1);
+
 namespace Nachoaguirre\WassengerBundle\Command;
 
 use Symfony\Component\Console\Attribute\AsCommand;

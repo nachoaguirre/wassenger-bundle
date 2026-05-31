@@ -13,6 +13,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class WassengerProvider implements ProviderInterface
 {
+    private const BASE_URL = 'https://api.wassenger.com/v1';
+
     public function __construct(
         private HttpClientInterface $httpClient,
         private PhoneNumberNormalizer $normalizer,
@@ -25,7 +27,7 @@ class WassengerProvider implements ProviderInterface
     {
         $phone = $this->normalizer->normalize($recipientId);
 
-        $this->httpClient->request('POST', 'https://api.wassenger.com/v1/messages', [
+        $response = $this->httpClient->request('POST', self::BASE_URL . '/messages', [
             'headers' => [
                 'Token' => $this->apiKey,
                 'Content-Type' => 'application/json',
@@ -36,11 +38,13 @@ class WassengerProvider implements ProviderInterface
                 'device' => $this->deviceId,
             ],
         ]);
+
+        $response->getContent();
     }
 
     public function sendTemplate(string $recipientId, string $templateName, array $params = []): void
     {
-        $this->httpClient->request('POST', 'https://api.wassenger.com/v1/messages', [
+        $response = $this->httpClient->request('POST', self::BASE_URL . '/messages', [
             'headers' => [
                 'Token' => $this->apiKey,
                 'Content-Type' => 'application/json',
@@ -53,6 +57,8 @@ class WassengerProvider implements ProviderInterface
                 'live' => true,
             ],
         ]);
+
+        $response->getContent();
     }
 
     public function validateNumber(string $phone): NumberValidation
@@ -60,11 +66,11 @@ class WassengerProvider implements ProviderInterface
         $phone = $this->normalizer->normalize($phone);
 
         if (!$this->normalizer->isValidFormat($phone)) {
-            return new NumberValidation(exists: false, errorMessage: 'Invalid local format');
+            return new NumberValidation(exists: false, errorMessage: 'Invalid local format', statusCode: 400);
         }
 
         try {
-            $response = $this->httpClient->request('POST', 'https://api.wassenger.com/v1/numbers/exists', [
+            $response = $this->httpClient->request('POST', self::BASE_URL . '/numbers/exists', [
                 'headers' => [
                     'Token' => $this->apiKey,
                     'Content-Type' => 'application/json',

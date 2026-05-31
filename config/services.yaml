@@ -3,6 +3,10 @@ services:
     autowire: true
     autoconfigure: true
 
+  Nachoaguirre\WassengerBundle\Contract\ProviderInterface:
+    alias: Nachoaguirre\WassengerBundle\Provider\WassengerProvider
+    public: true
+
   Nachoaguirre\WassengerBundle\EventSubscriber\GreetingsSubscriber:
     arguments:
       $enabled: true
@@ -10,6 +14,7 @@ services:
   Nachoaguirre\WassengerBundle\Service\PhoneNumberNormalizer: ~
 
   Nachoaguirre\WassengerBundle\Registry\RecipientRegistry: ~
+    public: true
 
   Nachoaguirre\WassengerBundle\Provider\WassengerProvider:
     arguments:

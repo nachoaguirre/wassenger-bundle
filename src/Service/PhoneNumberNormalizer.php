@@ -20,8 +20,7 @@ class PhoneNumberNormalizer
     public function isValidFormat(string $phone): bool
     {
         $normalized = $this->normalize($phone);
-        $length = strlen($normalized);
 
-        return $length >= 8 && $length <= 16 && str_starts_with($normalized, '+');
+        return preg_match('/^\+[1-9]\d{7,14}$/', $normalized) === 1;
     }
 }
