@@ -2,8 +2,8 @@
 
 [![Latest Version](https://img.shields.io/github/v/release/nachoaguirre/wassenger-bundle?display_name=tag)](https://github.com/nachoaguirre/wassenger-bundle)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
-[![Symfony Compatibility](https://img.shields.io/badge/symfony-6.x%20%2F%207.x-blue)](https://symfony.com)
-[![PHP Version](https://img.shields.io/badge/php-%3E%3D%208.1-purple)](https://php.net)
+[![Symfony Compatibility](https://img.shields.io/badge/symfony-6.4%20%2F%207.x%20%2F%208.x-blue)](https://symfony.com)
+[![PHP Version](https://img.shields.io/badge/php-%3E%3D%208.4-purple)](https://php.net)
 
 ## What is it?
 
@@ -14,7 +14,7 @@ Built with clean architecture principles in mind, it abstracts the complexity of
 ## How it works
 
 This bundle is built around three core pillars:
-1. **The Provider:** A service that acts as a bridge to the Wassenger API, allowing you to dispatch text or template messages effortlessly.
+1. **The Provider:** A service that acts as a bridge to the Wassenger API, allowing you to dispatch text, media, scheduled or template messages to individuals and groups effortlessly.
 2. **The Recipient Registry:** A configuration-driven system that lets you define stable aliases (e.g., `support_group`, `billing`) mapping to actual phone numbers or WhatsApp Group IDs.
 3. **The Webhook Event Dispatcher:** A secure, out-of-the-box controller that receives incoming messages from Wassenger and converts them into Symfony `WebhookEvent` objects. Your application simply listens to these events to trigger business logic.
 
@@ -22,8 +22,8 @@ This bundle is built around three core pillars:
 
 ## Requirements
 
-* **PHP:** >= 8.1
-* **Symfony:** 6.x or 7.x
+* **PHP:** >= 8.4
+* **Symfony:** 6.4 (LTS), 7.x or 8.x
 * **Wassenger Account:** An active API Key and Device ID from Wassenger.
 
 ---
@@ -109,14 +109,48 @@ class NotificationController
 
         // Or sending directly to a dynamic phone number 
         // (The bundle automatically normalizes E164 formats, stripping spaces/dashes)
-        $whatsapp->sendMessage('+56 9 1234 5678', "Your order has been shipped.");
+        $sent = $whatsapp->sendMessage('+56 9 1234 5678', "Your order has been shipped.");
 
-        return new Response('Notifications sent.');
+        // Every send returns a SentMessage DTO with the Wassenger message ID,
+        // useful to correlate delivery-status webhooks later on.
+        // $sent->id, $sent->status, $sent->deliverAt, $sent->raw
+
+        return new Response('Notifications sent. Message ID: ' . $sent->id);
     }
 }
 ```
 
-### 2. Using Doctrine Entities as Recipients
+### 2. Sending Media (Images, Videos, Documents)
+Send any publicly reachable file by URL, with an optional caption. Wassenger supports images (JPEG, PNG, WEBP), videos (MP4), audio (MP3, OGG), GIFs and documents (PDF, DOCX, ZIP, etc.).
+
+```php
+$whatsapp->sendMedia(
+    '+56912345678',
+    'https://example.com/invoices/inv-2026-001.pdf',
+    caption: 'Here is your invoice 🧾'
+);
+```
+
+### 3. Scheduling a Message
+Deliver a message at a future date. The bundle sends the timestamp in ISO 8601 (`deliverAt`), as expected by the Wassenger API.
+
+```php
+$whatsapp->scheduleMessage(
+    '+56912345678',
+    '¡Feliz Navidad! 🎄',
+    new \DateTimeImmutable('2026-12-24 20:00:00', new \DateTimeZone('America/Santiago'))
+);
+```
+
+### 4. Sending to WhatsApp Groups
+Pass a group ID (ending in `@g.us`) as the recipient — the bundle detects it automatically and addresses the group instead of a phone number. Group IDs also work through the Recipient Registry, as shown in the configuration above.
+
+```php
+$whatsapp->sendMessage('1203630234567890@g.us', 'Deploy finished successfully ✅');
+$whatsapp->sendMedia('1203630234567890@g.us', 'https://example.com/report.pdf', 'Weekly report');
+```
+
+### 5. Using Doctrine Entities as Recipients
 You can bind your existing database entities (like `User` or `Customer`) to the bundle by implementing the `WhatsappRecipientInterface`.
 
 ```php
@@ -139,7 +173,7 @@ class User implements WhatsappRecipientInterface
 ```
 Now you can pass the object directly to your notification logic, making your code incredibly clean.
 
-### 3. Validating a Number
+### 6. Validating a Number
 Wassenger provides an endpoint to check if a number actually has an active WhatsApp account. The bundle wraps this into a convenient DTO.
 
 ```php

@@ -41,7 +41,7 @@ class RecipientRegistry
             return $recipient->identifier;
         }
 
-        if ($this->normalizer->isValidFormat($aliasOrPhone)) {
+        if ($this->normalizer->isGroupId($aliasOrPhone) || $this->normalizer->isValidFormat($aliasOrPhone)) {
             return $aliasOrPhone;
         }
 

@@ -77,4 +77,26 @@ final class PhoneNumberNormalizerTest extends TestCase
     {
         self::assertFalse($this->normalizer->isValidFormat('not-a-phone'));
     }
+
+    // --- isGroupId() ---
+
+    public function testIsGroupIdReturnsTrueForGroupIdentifier(): void
+    {
+        self::assertTrue($this->normalizer->isGroupId('1203630234567890@g.us'));
+    }
+
+    public function testIsGroupIdTrimsSurroundingWhitespace(): void
+    {
+        self::assertTrue($this->normalizer->isGroupId('  1203630234567890@g.us  '));
+    }
+
+    public function testIsGroupIdReturnsFalseForPhoneNumber(): void
+    {
+        self::assertFalse($this->normalizer->isGroupId('+5491112345678'));
+    }
+
+    public function testIsGroupIdReturnsFalseForIndividualWid(): void
+    {
+        self::assertFalse($this->normalizer->isGroupId('5491112345678@c.us'));
+    }
 }

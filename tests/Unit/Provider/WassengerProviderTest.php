@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Nachoaguirre\WassengerBundle\Tests\Unit\Provider;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use Nachoaguirre\WassengerBundle\Exception\WassengerApiException;
 use Nachoaguirre\WassengerBundle\Model\NumberValidation;
+use Nachoaguirre\WassengerBundle\Model\SentMessage;
 use Nachoaguirre\WassengerBundle\Provider\WassengerProvider;
 use Nachoaguirre\WassengerBundle\Service\PhoneNumberNormalizer;
 use PHPUnit\Framework\TestCase;
@@ -67,6 +70,87 @@ final class WassengerProviderTest extends TestCase
 
         $headers = $response->getRequestOptions()['headers'];
         self::assertContains('Token: test-api-key', $headers);
+    }
+
+    public function testSendMessageReturnsSentMessageWithId(): void
+    {
+        $apiResponse = ['id' => 'msg-123', 'status' => 'queued', 'deliverAt' => '2026-08-01T12:00:00Z'];
+        $response = new MockResponse(json_encode($apiResponse), ['http_code' => 201]);
+        $provider = $this->makeProvider($response);
+
+        $result = $provider->sendMessage('+5491112345678', 'Hola');
+
+        self::assertInstanceOf(SentMessage::class, $result);
+        self::assertSame('msg-123', $result->id);
+        self::assertSame('queued', $result->status);
+        self::assertSame('2026-08-01T12:00:00Z', $result->deliverAt);
+        self::assertSame($apiResponse, $result->raw);
+    }
+
+    public function testSendMessageToGroupUsesGroupFieldWithoutNormalization(): void
+    {
+        $response = new MockResponse('{}', ['http_code' => 200]);
+        $provider = $this->makeProvider($response);
+
+        $provider->sendMessage('1203630234567890@g.us', 'Hola grupo');
+
+        $body = json_decode($response->getRequestOptions()['body'], true);
+        self::assertSame('1203630234567890@g.us', $body['group']);
+        self::assertArrayNotHasKey('phone', $body);
+    }
+
+    // --- sendMedia() ---
+
+    public function testSendMediaPostsMediaUrlAndCaption(): void
+    {
+        $response = new MockResponse('{"id":"media-1"}', ['http_code' => 201]);
+        $provider = $this->makeProvider($response);
+
+        $result = $provider->sendMedia('+5491112345678', 'https://example.com/invoice.pdf', 'Tu factura');
+
+        $body = json_decode($response->getRequestOptions()['body'], true);
+        self::assertSame('https://example.com/invoice.pdf', $body['media']['url']);
+        self::assertSame('Tu factura', $body['message']);
+        self::assertSame('+5491112345678', $body['phone']);
+        self::assertSame('test-device-id', $body['device']);
+        self::assertSame('media-1', $result->id);
+    }
+
+    public function testSendMediaOmitsCaptionWhenNotProvided(): void
+    {
+        $response = new MockResponse('{}', ['http_code' => 200]);
+        $provider = $this->makeProvider($response);
+
+        $provider->sendMedia('+5491112345678', 'https://example.com/photo.jpg');
+
+        $body = json_decode($response->getRequestOptions()['body'], true);
+        self::assertArrayNotHasKey('message', $body);
+    }
+
+    public function testSendMediaThrowsWassengerApiExceptionOnClientError(): void
+    {
+        $response = new MockResponse('{"error":"invalid media"}', ['http_code' => 400]);
+        $provider = $this->makeProvider($response);
+
+        $this->expectException(WassengerApiException::class);
+
+        $provider->sendMedia('+5491112345678', 'https://example.com/bad.bin');
+    }
+
+    // --- scheduleMessage() ---
+
+    public function testScheduleMessageAddsDeliverAtInIso8601(): void
+    {
+        $response = new MockResponse('{"id":"sched-1","status":"pending"}', ['http_code' => 201]);
+        $provider = $this->makeProvider($response);
+
+        $deliverAt = new DateTimeImmutable('2026-12-24 20:00:00', new DateTimeZone('UTC'));
+        $result = $provider->scheduleMessage('+5491112345678', 'Feliz Navidad', $deliverAt);
+
+        $body = json_decode($response->getRequestOptions()['body'], true);
+        self::assertSame('2026-12-24T20:00:00+00:00', $body['deliverAt']);
+        self::assertSame('Feliz Navidad', $body['message']);
+        self::assertSame('sched-1', $result->id);
     }
 
     // --- sendTemplate() ---

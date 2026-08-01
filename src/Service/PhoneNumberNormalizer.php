@@ -21,6 +21,11 @@ class PhoneNumberNormalizer
         return $clean;
     }
 
+    public function isGroupId(string $identifier): bool
+    {
+        return str_ends_with(trim($identifier), '@g.us');
+    }
+
     public function isValidFormat(string $phone): bool
     {
         $normalized = $this->normalize($phone);

@@ -83,6 +83,11 @@ final class RecipientRegistryTest extends TestCase
         self::assertSame('+5491112345678', $this->registry->resolveIdentifier('+5491112345678'));
     }
 
+    public function testResolveIdentifierReturnsRawValueForGroupId(): void
+    {
+        self::assertSame('1203630234567890@g.us', $this->registry->resolveIdentifier('1203630234567890@g.us'));
+    }
+
     public function testResolveIdentifierThrowsWhenAliasNotFoundAndNoDigits(): void
     {
         $this->expectException(InvalidArgumentException::class);

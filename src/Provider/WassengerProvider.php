@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Nachoaguirre\WassengerBundle\Provider;
 
+use DateTimeInterface;
 use Nachoaguirre\WassengerBundle\Contract\ProviderInterface;
 use Nachoaguirre\WassengerBundle\Exception\WassengerApiException;
 use Nachoaguirre\WassengerBundle\Model\NumberValidation;
+use Nachoaguirre\WassengerBundle\Model\SentMessage;
 use Nachoaguirre\WassengerBundle\Service\PhoneNumberNormalizer;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -24,54 +26,56 @@ class WassengerProvider implements ProviderInterface
     ) {
     }
 
-    public function sendMessage(string $recipientId, string $message, array $options = []): void
+    public function sendMessage(string $recipientId, string $message, array $options = []): SentMessage
     {
-        $phone = $this->normalizer->normalize($recipientId);
+        $payload = array_merge(
+            $this->recipientPayload($recipientId),
+            ['message' => $message, 'device' => $this->deviceId],
+            $options,
+        );
 
-        try {
-            $response = $this->httpClient->request('POST', self::BASE_URL . '/messages', [
-                'headers' => ['Token' => $this->apiKey],
-                'json' => array_merge([
-                    'phone' => $phone,
-                    'message' => $message,
-                    'device' => $this->deviceId,
-                ], $options),
-            ]);
-
-            $response->getContent();
-        } catch (ClientException $e) {
-            throw new WassengerApiException(sprintf('API rejected message (HTTP %d): %s', $e->getResponse()->getStatusCode(), $e->getMessage()), previous: $e);
-        } catch (Throwable $e) {
-            throw new WassengerApiException('Failed to send message: ' . $e->getMessage(), previous: $e);
-        }
+        return $this->postMessage($payload, 'message');
     }
 
-    public function sendTemplate(string $recipientId, string $templateName, array $params = []): void
+    public function sendMedia(string $recipientId, string $mediaUrl, ?string $caption = null, array $options = []): SentMessage
     {
-        $phone = $this->normalizer->normalize($recipientId);
+        $payload = array_merge(
+            $this->recipientPayload($recipientId),
+            [
+                'media' => ['url' => $mediaUrl],
+                'device' => $this->deviceId,
+            ],
+            $options,
+        );
 
+        if ($caption !== null && $caption !== '') {
+            $payload['message'] = $caption;
+        }
+
+        return $this->postMessage($payload, 'media message');
+    }
+
+    public function scheduleMessage(string $recipientId, string $message, DateTimeInterface $deliverAt, array $options = []): SentMessage
+    {
+        $options['deliverAt'] = $deliverAt->format(DateTimeInterface::ATOM);
+
+        return $this->sendMessage($recipientId, $message, $options);
+    }
+
+    public function sendTemplate(string $recipientId, string $templateName, array $params = []): SentMessage
+    {
         $template = ['name' => $templateName];
 
         if ($params !== []) {
             $template['params'] = $params;
         }
 
-        try {
-            $response = $this->httpClient->request('POST', self::BASE_URL . '/messages', [
-                'headers' => ['Token' => $this->apiKey],
-                'json' => [
-                    'phone' => $phone,
-                    'template' => $template,
-                    'live' => true,
-                ],
-            ]);
+        $payload = array_merge($this->recipientPayload($recipientId), [
+            'template' => $template,
+            'live' => true,
+        ]);
 
-            $response->getContent();
-        } catch (ClientException $e) {
-            throw new WassengerApiException(sprintf('API rejected template (HTTP %d): %s', $e->getResponse()->getStatusCode(), $e->getMessage()), previous: $e);
-        } catch (Throwable $e) {
-            throw new WassengerApiException('Failed to send template: ' . $e->getMessage(), previous: $e);
-        }
+        return $this->postMessage($payload, 'template');
     }
 
     public function validateNumber(string $phone): NumberValidation
@@ -111,6 +115,37 @@ class WassengerProvider implements ProviderInterface
                 errorMessage: $e->getMessage(),
                 statusCode: 500
             );
+        }
+    }
+
+    /**
+     * Group chats are addressed by their WhatsApp ID (e.g. "1234567890@g.us")
+     * via the "group" field; individual recipients use a normalized "phone".
+     */
+    private function recipientPayload(string $recipientId): array
+    {
+        if ($this->normalizer->isGroupId($recipientId)) {
+            return ['group' => trim($recipientId)];
+        }
+
+        return ['phone' => $this->normalizer->normalize($recipientId)];
+    }
+
+    private function postMessage(array $payload, string $context): SentMessage
+    {
+        try {
+            $response = $this->httpClient->request('POST', self::BASE_URL . '/messages', [
+                'headers' => ['Token' => $this->apiKey],
+                'json' => $payload,
+            ]);
+
+            $data = json_decode($response->getContent(), true);
+
+            return SentMessage::fromApiResponse(\is_array($data) ? $data : []);
+        } catch (ClientException $e) {
+            throw new WassengerApiException(sprintf('API rejected %s (HTTP %d): %s', $context, $e->getResponse()->getStatusCode(), $e->getMessage()), previous: $e);
+        } catch (Throwable $e) {
+            throw new WassengerApiException(sprintf('Failed to send %s: %s', $context, $e->getMessage()), previous: $e);
         }
     }
 }
